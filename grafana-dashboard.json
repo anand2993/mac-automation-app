@@ -1,0 +1,309 @@
+{
+    "dashboard": {
+        "title": "Mac Automation App Monitoring",
+        "tags": [
+            "mac-automation",
+            "monitoring"
+        ],
+        "timezone": "browser",
+        "schemaVersion": 38,
+        "version": 1,
+        "refresh": "5s",
+        "panels": [
+            {
+                "id": 1,
+                "title": "System Status",
+                "type": "stat",
+                "gridPos": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                },
+                "targets": [
+                    {
+                        "expr": "system_status",
+                        "refId": "A"
+                    }
+                ],
+                "options": {
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "textMode": "value_and_name"
+                },
+                "fieldConfig": {
+                    "defaults": {
+                        "mappings": [
+                            {
+                                "type": "value",
+                                "options": {
+                                    "0": {
+                                        "text": "DOWN",
+                                        "color": "red"
+                                    },
+                                    "1": {
+                                        "text": "UP",
+                                        "color": "green"
+                                    }
+                                }
+                            }
+                        ],
+                        "thresholds": {
+                            "mode": "absolute",
+                            "steps": [
+                                {
+                                    "value": 0,
+                                    "color": "red"
+                                },
+                                {
+                                    "value": 1,
+                                    "color": "green"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "id": 2,
+                "title": "Total Requests",
+                "type": "stat",
+                "gridPos": {
+                    "x": 6,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                },
+                "targets": [
+                    {
+                        "expr": "sum(app_request_count)",
+                        "refId": "A"
+                    }
+                ],
+                "options": {
+                    "colorMode": "value",
+                    "graphMode": "area",
+                    "textMode": "value_and_name"
+                },
+                "fieldConfig": {
+                    "defaults": {
+                        "color": {
+                            "mode": "palette-classic"
+                        }
+                    }
+                }
+            },
+            {
+                "id": 3,
+                "title": "Apps Opened",
+                "type": "stat",
+                "gridPos": {
+                    "x": 12,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                },
+                "targets": [
+                    {
+                        "expr": "sum(app_open_count)",
+                        "refId": "A"
+                    }
+                ],
+                "options": {
+                    "colorMode": "value",
+                    "graphMode": "area",
+                    "textMode": "value_and_name"
+                },
+                "fieldConfig": {
+                    "defaults": {
+                        "color": {
+                            "mode": "palette-classic"
+                        }
+                    }
+                }
+            },
+            {
+                "id": 4,
+                "title": "Request Rate (per minute)",
+                "type": "gauge",
+                "gridPos": {
+                    "x": 18,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                },
+                "targets": [
+                    {
+                        "expr": "rate(app_request_count[1m]) * 60",
+                        "refId": "A"
+                    }
+                ],
+                "options": {
+                    "showThresholdLabels": false,
+                    "showThresholdMarkers": true
+                },
+                "fieldConfig": {
+                    "defaults": {
+                        "unit": "reqpm",
+                        "thresholds": {
+                            "mode": "absolute",
+                            "steps": [
+                                {
+                                    "value": 0,
+                                    "color": "green"
+                                },
+                                {
+                                    "value": 50,
+                                    "color": "yellow"
+                                },
+                                {
+                                    "value": 100,
+                                    "color": "red"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "id": 5,
+                "title": "Requests Over Time",
+                "type": "timeseries",
+                "gridPos": {
+                    "x": 0,
+                    "y": 4,
+                    "w": 12,
+                    "h": 8
+                },
+                "targets": [
+                    {
+                        "expr": "app_request_count",
+                        "refId": "A",
+                        "legendFormat": "{{method}} {{endpoint}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "calcs": [
+                            "lastNotNull",
+                            "max"
+                        ]
+                    }
+                },
+                "fieldConfig": {
+                    "defaults": {
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "smooth",
+                            "fillOpacity": 10
+                        }
+                    }
+                }
+            },
+            {
+                "id": 6,
+                "title": "Apps Opened Over Time",
+                "type": "timeseries",
+                "gridPos": {
+                    "x": 12,
+                    "y": 4,
+                    "w": 12,
+                    "h": 8
+                },
+                "targets": [
+                    {
+                        "expr": "app_open_count",
+                        "refId": "A",
+                        "legendFormat": "{{app_name}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "calcs": [
+                            "lastNotNull",
+                            "max"
+                        ]
+                    }
+                },
+                "fieldConfig": {
+                    "defaults": {
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "smooth",
+                            "fillOpacity": 10
+                        }
+                    }
+                }
+            },
+            {
+                "id": 7,
+                "title": "Requests by Endpoint",
+                "type": "barchart",
+                "gridPos": {
+                    "x": 0,
+                    "y": 12,
+                    "w": 12,
+                    "h": 8
+                },
+                "targets": [
+                    {
+                        "expr": "sum by (endpoint) (app_request_count)",
+                        "refId": "A",
+                        "legendFormat": "{{endpoint}}"
+                    }
+                ],
+                "options": {
+                    "orientation": "horizontal",
+                    "showValue": "always"
+                },
+                "fieldConfig": {
+                    "defaults": {
+                        "color": {
+                            "mode": "palette-classic"
+                        }
+                    }
+                }
+            },
+            {
+                "id": 8,
+                "title": "Most Opened Apps",
+                "type": "barchart",
+                "gridPos": {
+                    "x": 12,
+                    "y": 12,
+                    "w": 12,
+                    "h": 8
+                },
+                "targets": [
+                    {
+                        "expr": "topk(10, app_open_count)",
+                        "refId": "A",
+                        "legendFormat": "{{app_name}}"
+                    }
+                ],
+                "options": {
+                    "orientation": "horizontal",
+                    "showValue": "always"
+                },
+                "fieldConfig": {
+                    "defaults": {
+                        "color": {
+                            "mode": "palette-classic"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "overwrite": true
+}
