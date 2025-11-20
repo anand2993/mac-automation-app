@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mac Automation | Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script> <!-- FontAwesome Mock -->
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo">MacControl</div>
+        <div class="user-info">
+            <span>{{ user }}</span>
+            <a href="{{ url_for('logout') }}" class="btn-small">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container dashboard-container">
+        <header class="dashboard-header">
+            <h2>Command Center</h2>
+            <p>Launch applications instantly.</p>
+        </header>
+
+        <div class="grid">
+            <!-- FaceTime -->
+            <div class="card" onclick="openApp('facetime')">
+                <div class="icon-wrapper facetime">
+                    <span class="icon">📹</span>
+                </div>
+                <h3>FaceTime</h3>
+                <p>Video calls</p>
+            </div>
+
+            <!-- WhatsApp -->
+            <div class="card" onclick="openApp('whatsapp')">
+                <div class="icon-wrapper whatsapp">
+                    <span class="icon">💬</span>
+                </div>
+                <h3>WhatsApp</h3>
+                <p>Messaging</p>
+            </div>
+
+            <!-- Docker -->
+            <div class="card" onclick="openApp('docker')">
+                <div class="icon-wrapper docker">
+                    <span class="icon">🐳</span>
+                </div>
+                <h3>Docker</h3>
+                <p>Container Runtime</p>
+            </div>
+
+            <!-- Terminal -->
+            <div class="card" onclick="openApp('terminal')">
+                <div class="icon-wrapper terminal">
+                    <span class="icon">💻</span>
+                </div>
+                <h3>Terminal</h3>
+                <p>System Shell</p>
+            </div>
+        </div>
+
+        <div id="status-message" class="status-toast hidden"></div>
+    </div>
+
+    <script>
+        async function openApp(appName) {
+            const toast = document.getElementById('status-message');
+            toast.textContent = `Launching ${appName}...`;
+            toast.className = 'status-toast show';
+
+            try {
+                const response = await fetch('/open-app', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ app_name: appName })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    toast.textContent = `Success: ${data.message}`;
+                    toast.classList.add('success');
+                } else {
+                    toast.textContent = `Error: ${data.message}`;
+                    toast.classList.add('error');
+                }
+            } catch (e) {
+                toast.textContent = `Network Error: ${e}`;
+                toast.classList.add('error');
+            }
+
+            setTimeout(() => {
+                toast.className = 'status-toast hidden';
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>

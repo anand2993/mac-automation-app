@@ -1,0 +1,34 @@
+trigger:
+  - main
+
+pool:
+  name: 'Default' # Assumes self-hosted agent is in the 'Default' pool
+
+variables:
+  imageName: 'mac-automation-app'
+
+steps:
+- script: |
+    echo "Building Docker images..."
+    docker-compose build
+  displayName: 'Build Docker Images'
+
+- script: |
+    echo "Stopping old containers..."
+    docker-compose down || true
+  displayName: 'Cleanup Old Containers'
+
+- script: |
+    echo "Starting application stack..."
+    # Note: You must set HOST_USER and HOST_PASSWORD as secret variables in Azure DevOps
+    docker-compose up -d
+  displayName: 'Deploy Application'
+  env:
+    HOST_USER: $(HOST_USER)
+    HOST_PASSWORD: $(HOST_PASSWORD)
+
+- script: |
+    echo "Verifying deployment..."
+    sleep 10
+    docker ps
+  displayName: 'Verify Deployment'
