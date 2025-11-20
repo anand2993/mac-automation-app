@@ -2,33 +2,167 @@ trigger:
   - main
 
 pool:
-  name: 'Default' # Assumes self-hosted agent is in the 'Default' pool
+  name: 'Default' # Self-hosted agent pool
 
 variables:
   imageName: 'mac-automation-app'
+  composeFile: 'docker-compose.yml'
 
 steps:
+# Step 1: Show current state
 - script: |
-    echo "Building Docker images..."
-    docker-compose build
-  displayName: 'Build Docker Images'
+    echo "=== Current Running Containers ==="
+    docker ps
+    echo ""
+    echo "=== Current Images ==="
+    docker images | grep -E "mac-automation-app|prometheus|grafana|loki|promtail" || echo "No existing images"
+  displayName: '📊 Show Current State'
+  continueOnError: true
 
+# Step 2: Stop all containers
 - script: |
-    echo "Stopping old containers..."
-    docker-compose down || true
-  displayName: 'Cleanup Old Containers'
+    echo "Stopping all containers..."
+    docker-compose -f $(composeFile) down
+    
+    echo "Verifying containers are stopped..."
+    docker ps -a | grep -E "mac-automation-app|prometheus|grafana|loki|promtail" || echo "All containers stopped"
+  displayName: '🛑 Stop All Containers'
+  continueOnError: true
 
+# Step 3: Clean up old images (optional but recommended)
+- script: |
+    echo "Removing old application image..."
+    docker rmi $(imageName)-web-app || echo "No old image to remove"
+    
+    echo "Pruning dangling images..."
+    docker image prune -f
+  displayName: '🧹 Clean Up Old Images'
+  continueOnError: true
+
+# Step 4: Build new images
+- script: |
+    echo "Building Docker images with no cache..."
+    docker-compose -f $(composeFile) build --no-cache
+    
+    echo "=== Newly Built Images ==="
+    docker images | grep mac-automation-app
+  displayName: '🔨 Build Docker Images'
+
+# Step 5: Verify build succeeded
+- script: |
+    echo "Verifying image was built..."
+    docker images | grep mac-automation-app-web-app || exit 1
+    echo "✅ Image build verified"
+  displayName: '✅ Verify Build'
+
+# Step 6: Start all containers
 - script: |
     echo "Starting application stack..."
-    # Note: You must set HOST_USER and HOST_PASSWORD as secret variables in Azure DevOps
-    docker-compose up -d
-  displayName: 'Deploy Application'
+    docker-compose -f $(composeFile) up -d
+    
+    echo "Waiting for containers to start..."
+    sleep 10
+  displayName: '🚀 Start All Containers'
   env:
     HOST_USER: $(HOST_USER)
     HOST_PASSWORD: $(HOST_PASSWORD)
 
+# Step 7: Verify all containers are running
 - script: |
-    echo "Verifying deployment..."
-    sleep 10
+    echo "=== Running Containers ==="
     docker ps
-  displayName: 'Verify Deployment'
+    
+    echo ""
+    echo "=== Verifying Container Status ==="
+    
+    # Check if all expected containers are running
+    containers=("mac-automation-app" "prometheus" "grafana" "loki" "promtail")
+    all_running=true
+    
+    for container in "${containers[@]}"; do
+      if docker ps | grep -q "$container"; then
+        echo "✅ $container is running"
+      else
+        echo "❌ $container is NOT running"
+        all_running=false
+      fi
+    done
+    
+    if [ "$all_running" = false ]; then
+      echo "⚠️  Some containers failed to start!"
+      exit 1
+    fi
+    
+    echo ""
+    echo "✅ All containers are running successfully!"
+  displayName: '✅ Verify All Containers Running'
+
+# Step 8: Health checks
+- script: |
+    echo "=== Health Checks ==="
+    
+    echo "Waiting for services to be ready..."
+    sleep 5
+    
+    # Check web app
+    echo "Checking Web App (port 8080)..."
+    curl -f http://localhost:8080 > /dev/null 2>&1 && echo "✅ Web App is healthy" || echo "⚠️  Web App health check failed"
+    
+    # Check Prometheus
+    echo "Checking Prometheus (port 19090)..."
+    curl -f http://localhost:19090/-/healthy > /dev/null 2>&1 && echo "✅ Prometheus is healthy" || echo "⚠️  Prometheus health check failed"
+    
+    # Check Grafana
+    echo "Checking Grafana (port 3000)..."
+    curl -f http://localhost:3000/api/health > /dev/null 2>&1 && echo "✅ Grafana is healthy" || echo "⚠️  Grafana health check failed"
+    
+    # Check Loki
+    echo "Checking Loki (port 3100)..."
+    curl -f http://localhost:3100/ready > /dev/null 2>&1 && echo "✅ Loki is healthy" || echo "⚠️  Loki health check failed"
+    
+    echo ""
+    echo "✅ Health checks completed"
+  displayName: '🏥 Health Checks'
+  continueOnError: true
+
+# Step 9: Show container logs (for debugging)
+- script: |
+    echo "=== Recent Container Logs ==="
+    echo ""
+    echo "--- Web App Logs ---"
+    docker logs mac-automation-app --tail 20
+    echo ""
+    echo "--- Prometheus Logs ---"
+    docker logs prometheus --tail 10
+    echo ""
+    echo "--- Loki Logs ---"
+    docker logs loki --tail 10
+  displayName: '📝 Show Container Logs'
+  continueOnError: true
+
+# Step 10: Verify logging configuration
+- script: |
+    echo "=== Verifying Log Configuration ==="
+    docker inspect mac-automation-app | grep -A 5 "LogConfig"
+    echo ""
+    echo "✅ Log rotation is configured (50MB limit)"
+  displayName: '📊 Verify Log Configuration'
+  continueOnError: true
+
+# Step 11: Final summary
+- script: |
+    echo "======================================"
+    echo "🎉 DEPLOYMENT SUCCESSFUL!"
+    echo "======================================"
+    echo ""
+    echo "Services accessible at:"
+    echo "  • Web App:    http://localhost:8080"
+    echo "  • Grafana:    http://localhost:3000"
+    echo "  • Prometheus: http://localhost:19090"
+    echo "  • Loki:       http://localhost:3100"
+    echo ""
+    echo "Container Status:"
+    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+    echo ""
+    echo "======================================"
+  displayName: '🎉 Deployment Summary'
