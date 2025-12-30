@@ -15,12 +15,19 @@ steps:
     brew install --cask docker
     
     echo "Starting Docker Desktop..."
-    open -a docker
+    open -a "Docker Desktop" || open /Applications/Docker.app
     
     echo "Waiting for Docker to start..."
+    timeout=180
+    elapsed=0
     while ! docker info > /dev/null 2>&1; do
-      echo "Waiting for Docker daemon..."
+      if [ $elapsed -ge $timeout ]; then
+        echo "❌ Docker failed to start within $timeout seconds"
+        exit 1
+      fi
+      echo "Waiting for Docker daemon... ($elapsed/$timeout seconds)"
       sleep 5
+      elapsed=$((elapsed + 5))
     done
     
     echo "✅ Docker is ready"
