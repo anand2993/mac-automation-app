@@ -22,7 +22,7 @@ steps:
 # Step 2: Stop all containers
 - script: |
     echo "Stopping all containers..."
-    docker-compose -f $(composeFile) down
+    docker compose -f $(composeFile) down
     
     echo "Verifying containers are stopped..."
     docker ps -a | grep -E "mac-automation-app|prometheus|grafana|loki|promtail" || echo "All containers stopped"
@@ -42,7 +42,7 @@ steps:
 # Step 4: Build new images
 - script: |
     echo "Building Docker images with no cache..."
-    docker-compose -f $(composeFile) build --no-cache
+    docker compose -f $(composeFile) build --no-cache
     
     echo "=== Newly Built Images ==="
     docker images | grep mac-automation-app
@@ -58,7 +58,7 @@ steps:
 # Step 6: Start all containers
 - script: |
     echo "Starting application stack..."
-    docker-compose -f $(composeFile) up -d
+    docker compose -f $(composeFile) up -d
     
     echo "Waiting for containers to start..."
     sleep 10
