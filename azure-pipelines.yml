@@ -2,7 +2,7 @@ trigger:
   - main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'macOS-latest'
 
 variables:
   imageName: 'mac-automation-app'
