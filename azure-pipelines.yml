@@ -15,19 +15,31 @@ steps:
     brew install --cask docker
     
     echo "Starting Docker Desktop..."
-    open -a "Docker Desktop" || open /Applications/Docker.app
+    # Try multiple ways to start Docker
+    open -a "Docker Desktop" 2>/dev/null || \
+    open -a "Docker" 2>/dev/null || \
+    open /Applications/Docker.app 2>/dev/null || \
+    sudo /usr/local/bin/docker --version
     
-    echo "Waiting for Docker to start..."
+    echo "Waiting for Docker daemon to start..."
     timeout=180
     elapsed=0
     while ! docker info > /dev/null 2>&1; do
       if [ $elapsed -ge $timeout ]; then
         echo "❌ Docker failed to start within $timeout seconds"
-        exit 1
+        echo "Attempting to start Docker daemon manually..."
+        sudo /usr/local/bin/dockerd &
+        sleep 10
       fi
       echo "Waiting for Docker daemon... ($elapsed/$timeout seconds)"
       sleep 5
       elapsed=$((elapsed + 5))
+      
+      # Final timeout check
+      if [ $elapsed -ge 300 ]; then
+        echo "❌ Docker failed to start after all attempts"
+        exit 1
+      fi
     done
     
     echo "✅ Docker is ready"
