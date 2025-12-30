@@ -15,7 +15,7 @@ steps:
     brew install --cask docker
     
     echo "Starting Docker Desktop..."
-    open -a Docker
+    open -a docker
     
     echo "Waiting for Docker to start..."
     while ! docker info > /dev/null 2>&1; do
