@@ -2,7 +2,7 @@ trigger:
   - main
 
 pool:
-  name: 'Default' # Self-hosted agent pool
+  vmImage: 'ubuntu-latest'
 
 variables:
   imageName: 'mac-automation-app'
