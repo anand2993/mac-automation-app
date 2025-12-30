@@ -9,6 +9,25 @@ variables:
   composeFile: 'docker-compose.yml'
 
 steps:
+# Step 0: Install Docker on macOS
+- script: |
+    echo "Installing Docker Desktop for macOS..."
+    brew install --cask docker
+    
+    echo "Starting Docker Desktop..."
+    open -a Docker
+    
+    echo "Waiting for Docker to start..."
+    while ! docker info > /dev/null 2>&1; do
+      echo "Waiting for Docker daemon..."
+      sleep 5
+    done
+    
+    echo "✅ Docker is ready"
+    docker --version
+    docker compose version
+  displayName: '🐳 Install and Start Docker'
+
 # Step 1: Show current state
 - script: |
     echo "=== Current Running Containers ==="
